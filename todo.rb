@@ -73,7 +73,13 @@ class Todo < ActiveRecord::Base
     # テーブルが作成されていない場合引き返す
     return unless connection.table_exists?(:todos)
 
-    CSV.read(file_path)
+    CSV.open(file_path, 'r', headers: true).each do |csv|
+      create(
+        subject: csv["だれが"], place: csv["どこで"],
+        object: csv["なにを"], verb: csv["どうする"],
+        s_time: csv["いつから"], e_time: csv["いつまで"],
+      )
+    end
   end
 end
 
@@ -84,7 +90,4 @@ end
 
 # Todo.export
 
-# マイグレーション済み
-# 現在空の状態
-
-# pp Todo.import('csv/import.csv')
+# Todo.import('csv/import.csv')
