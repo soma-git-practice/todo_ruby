@@ -85,17 +85,42 @@ class Todo < ActiveRecord::Base
         destroy(csv['id']) if where(id: csv['id']).present?
       elsif csv['id'].present?
         # 編集
-        puts "#{ csv['id'] }を編集しました。"
-        target = where(id: csv['id'])
-        attr = {
-                subject: csv['だれが'],
-                place: csv['どこで'],
-                object: csv['なにを'],
-                verb: csv['どうする']
-              }.compact
-        # s_timeとe_timeはnilを許す
-        attr.update({s_time: csv['いつから'], e_time: csv['いつまで']})
+        target = where(id: csv['id']).first
+        attr = {}
+        arr = []
+        # 誰が
+        if csv['だれが'].present? && csv['だれが'] != target[:subject]
+          attr[:subject] = csv['だれが']
+          arr << 'だれが'
+        end
+        # どこで
+        if csv['どこで'].present? && csv['どこで'] != target[:place]
+          attr[:place] = csv['どこで']
+          arr << 'どこで'
+        end
+        # なにを
+        if csv['なにを'].present? && csv['なにを'] != target[:object]
+          attr[:object] = csv['なにを']
+          arr << 'なにを'
+        end
+        # どうする
+        if csv['どうする'].present? && csv['どうする'] != target[:verb]
+          attr[:verb] = csv['どうする']
+          arr << 'どうする'
+        end
+        # いつから
+        if csv['いつから'] != target[:s_time]
+          attr[:s_time] = csv['いつから']
+          arr << 'いつから'
+        end
+        # いつまで
+        if csv['いつまで'] != target[:e_time]
+          attr[:e_time] = csv['いつまで']
+          arr << 'いつまで'
+        end
         target.update(attr)
+        puts "#{csv['id']}を編集しました。#{arr}" if arr.present?
+        puts "#{csv['id']}に変更はありません。" if arr.blank?
       else
         puts "新規作成しました。"
         create(
@@ -109,16 +134,15 @@ class Todo < ActiveRecord::Base
       end
     end
   end
+
 end
 
 # マイグレーションのON・OFFスイッチ
-Migrate.switch
-Migrate.switch
+# Migrate.switch
+# Migrate.switch
 # 初期データ作成
 Todo.setup
 
 # switch switch setupで毎回リセット
 
 Todo.import('csv/import.csv')
-
-p Todo.all
