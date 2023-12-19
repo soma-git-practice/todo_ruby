@@ -2,11 +2,14 @@ require 'active_record'
 require 'csv'
 require 'pry'
 
-# データベース接続
+# データベース接続作成
 ActiveRecord::Base.establish_connection(
   adapter: 'sqlite3',
   database: 'db/todo.db'
 )
+
+# データベース接続
+connection = ActiveRecord::Base.connection
 
 # テーブル操作
 class Migrate < ActiveRecord::Migration[7.0]
@@ -28,7 +31,7 @@ class Migrate < ActiveRecord::Migration[7.0]
   end
 
   def self.switch
-    ActiveRecord::Base.connection.table_exists?(:todos) ? stop : start
+    connection.table_exists?(:todos) ? stop : start
   end
 end
 
@@ -42,6 +45,8 @@ class Todo < ActiveRecord::Base
   def self.setup
     # テーブルが存在していれば
     return unless connection.table_exists?(:todos)
+    # DB内にレコードが存在しない場合のみ
+    return if all.present?
     create(subject: 'Aさん', place: 'A書店', object: '本', verb: 'A冊買う', s_time: arrange_time(2023, 12, 17, 13, 0), e_time: arrange_time(2023, 12, 17, 13, 30))
     create(subject: 'Bさん', place: 'B書店', object: '本', verb: 'B冊買う', s_time: arrange_time(2023, 12, 17, 14, 0), e_time: arrange_time(2024, 12, 17, 14, 30))
     create(subject: 'Cさん', place: 'C書店', object: '本', verb: 'C冊買う', s_time: arrange_time(2024, 12, 17, 15, 0), e_time: arrange_time(2024, 12, 17, 15, 30))
@@ -74,20 +79,46 @@ class Todo < ActiveRecord::Base
     return unless connection.table_exists?(:todos)
 
     CSV.open(file_path, 'r', headers: true).each do |csv|
-      create(
-        subject: csv["だれが"], place: csv["どこで"],
-        object: csv["なにを"], verb: csv["どうする"],
-        s_time: csv["いつから"], e_time: csv["いつまで"],
-      )
+      if csv['id'].present? && csv['delete'].present?
+        # 削除
+        puts "#{ csv['id'] }を削除しました。"
+        destroy(csv['id']) if where(id: csv['id']).present?
+      elsif csv['id'].present?
+        # 編集
+        puts "#{ csv['id'] }を編集しました。"
+        target = where(id: csv['id'])
+        attr = {
+                subject: csv['だれが'],
+                place: csv['どこで'],
+                object: csv['なにを'],
+                verb: csv['どうする']
+              }.compact
+        # s_timeとe_timeはnilを許す
+        attr.update({s_time: csv['いつから'], e_time: csv['いつまで']})
+        target.update(attr)
+      else
+        puts "新規作成しました。"
+        create(
+          subject: csv["だれが"],
+          place: csv["どこで"],
+          object: csv["なにを"],
+          verb: csv["どうする"],
+          s_time: csv["いつから"],
+          e_time: csv["いつまで"]
+        )
+      end
     end
   end
 end
 
 # マイグレーションのON・OFFスイッチ
-# Migrate.switch
+Migrate.switch
+Migrate.switch
 # 初期データ作成
-# Todo.setup
+Todo.setup
 
-# Todo.export
+# switch switch setupで毎回リセット
 
-# Todo.import('csv/import.csv')
+Todo.import('csv/import.csv')
+
+p Todo.all
