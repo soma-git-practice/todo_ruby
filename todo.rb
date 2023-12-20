@@ -77,8 +77,12 @@ class Todo < ActiveRecord::Base
     CSV.open(file_path, 'r', headers: true).each do |csv|
       if csv['ID'].present? && csv['削除'].present?
         # 削除
-        destroy(csv['ID']) if where(id: csv['ID']).present?
-        puts "#{ csv['ID'] }を削除しました。"
+        if where(id: csv['ID']).present?
+          destroy(csv['ID'])
+          puts "#{csv['ID']}を削除しました。"
+        else
+          puts "#{csv['ID']}に変更はありません。"
+        end
       elsif csv['ID'].present?
         # 編集
         target = where(id: csv['ID']).first
@@ -105,6 +109,14 @@ class Todo < ActiveRecord::Base
         puts "#{csv['ID']}に変更はありません。" if update_message_words.blank?
       else
         # 新規作成
+        create(
+            subject: csv['だれが'],
+            place: csv['どこで'],
+            object: csv['なにを'],
+            verb: csv['どうする'],
+            s_time: csv['いつから'],
+            e_time: csv['いつまで']
+          )
         puts "新規作成しました。"
       end
     end
