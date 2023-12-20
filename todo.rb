@@ -52,13 +52,9 @@ class Todo < ActiveRecord::Base
     create(subject: 'Cさん', place: 'C書店', object: '本', verb: 'C冊買う', s_time: arrange_time(2024, 12, 17, 15, 0), e_time: arrange_time(2024, 12, 17, 15, 30))
   end
 
+  HEADER = { id: 'ID', subject: 'だれが', place: 'どこで', object: 'なにを', verb: 'どうする', s_time: 'いつから', e_time: 'いつまで', delete: '削除' }
+  
   # エクスポート関連
-  def self.values_at(obj)
-    obj.values_at(:subject, :place, :object, :verb, :s_time, :e_time)
-  end
-
-  HEADER = { subject: 'だれが', place: 'どこで', object: 'なにを', verb: 'どうする', s_time: 'いつから', e_time: 'いつまで' }
-
   def self.export
     # テーブルが作成されていない場合引き返す
     return unless connection.table_exists?(:todos)
@@ -68,8 +64,8 @@ class Todo < ActiveRecord::Base
     FileUtils.mkdir_p('csv')
     file_name = "csv/e#{ Time.now.strftime('%Y%m%d%H%M%S') }.csv"
     CSV.open(file_name, 'w') do |csv|
-      csv << values_at(HEADER)
-      all.each{ |row| csv << values_at(row) }
+      csv << HEADER.values
+      all.each{ |row| csv << row.attributes.values }
     end
   end
 
@@ -79,58 +75,37 @@ class Todo < ActiveRecord::Base
     return unless connection.table_exists?(:todos)
 
     CSV.open(file_path, 'r', headers: true).each do |csv|
-      if csv['id'].present? && csv['delete'].present?
+      if csv['ID'].present? && csv['削除'].present?
         # 削除
-        puts "#{ csv['id'] }を削除しました。"
-        destroy(csv['id']) if where(id: csv['id']).present?
-      elsif csv['id'].present?
+        destroy(csv['ID']) if where(id: csv['ID']).present?
+        puts "#{ csv['ID'] }を削除しました。"
+      elsif csv['ID'].present?
         # 編集
-        target = where(id: csv['id']).first
-        attr = {}
-        arr = []
-        # 誰が
-        if csv['だれが'].present? && csv['だれが'] != target[:subject]
-          attr[:subject] = csv['だれが']
-          arr << 'だれが'
-        end
-        # どこで
-        if csv['どこで'].present? && csv['どこで'] != target[:place]
-          attr[:place] = csv['どこで']
-          arr << 'どこで'
-        end
-        # なにを
-        if csv['なにを'].present? && csv['なにを'] != target[:object]
-          attr[:object] = csv['なにを']
-          arr << 'なにを'
-        end
-        # どうする
-        if csv['どうする'].present? && csv['どうする'] != target[:verb]
-          attr[:verb] = csv['どうする']
-          arr << 'どうする'
-        end
-        # いつから
-        if csv['いつから'] != target[:s_time]
-          attr[:s_time] = csv['いつから']
-          arr << 'いつから'
-        end
-        # いつまで
-        if csv['いつまで'] != target[:e_time]
-          attr[:e_time] = csv['いつまで']
-          arr << 'いつまで'
-        end
-        target.update(attr)
-        puts "#{csv['id']}を編集しました。#{arr}" if arr.present?
-        puts "#{csv['id']}に変更はありません。" if arr.blank?
+        target = where(id: csv['ID']).first
+        update_attributes = {}
+        update_message_words = []
+        set_attr = Proc.new do |sym|
+                    case sym
+                      when :id
+                        conditions = false
+                      when :s_time, :e_time
+                        conditions = csv[HEADER[sym]] != target[sym]
+                      else
+                        conditions = csv[HEADER[sym]].present? && csv[HEADER[sym]] != target[sym]
+                    end
+                    if conditions
+                      update_attributes[sym] = csv[HEADER[sym]]
+                      update_message_words << HEADER[sym]
+                    end
+                  end
+        target_symbol_keys = target.attributes.symbolize_keys.keys
+        target_symbol_keys.each{|item| set_attr.call(item)}
+        target.update(update_attributes)
+        puts "#{csv['ID']}を編集しました。#{update_message_words}" if update_message_words.present?
+        puts "#{csv['ID']}に変更はありません。" if update_message_words.blank?
       else
+        # 新規作成
         puts "新規作成しました。"
-        create(
-          subject: csv["だれが"],
-          place: csv["どこで"],
-          object: csv["なにを"],
-          verb: csv["どうする"],
-          s_time: csv["いつから"],
-          e_time: csv["いつまで"]
-        )
       end
     end
   end
@@ -138,11 +113,9 @@ class Todo < ActiveRecord::Base
 end
 
 # マイグレーションのON・OFFスイッチ
-# Migrate.switch
-# Migrate.switch
+Migrate.switch
+Migrate.switch
 # 初期データ作成
 Todo.setup
-
-# switch switch setupで毎回リセット
-
+# Todo.export
 Todo.import('csv/import.csv')
