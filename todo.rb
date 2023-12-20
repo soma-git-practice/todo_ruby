@@ -85,6 +85,7 @@ class Todo < ActiveRecord::Base
         end
       elsif csv['ID'].present?
         # 編集
+        # TODO ヘッダーに無いシンボルに関して考える
         target = where(id: csv['ID']).first
         update_attributes = {}
         update_message_words = []
@@ -109,6 +110,7 @@ class Todo < ActiveRecord::Base
         puts "#{csv['ID']}に変更はありません。" if update_message_words.blank?
       else
         # 新規作成
+        # TODO ヘッダーに合わせて柔軟に変化させたい
         create(
             subject: csv['だれが'],
             place: csv['どこで'],
@@ -122,12 +124,13 @@ class Todo < ActiveRecord::Base
     end
   end
 
+  # TODO weblickでwebサーバー作成に挑戦
 end
 
 # マイグレーションのON・OFFスイッチ
 Migrate.switch
 Migrate.switch
 # 初期データ作成
-Todo.setup
-# Todo.export
+# Todo.setup
+
 Todo.import('csv/import.csv')
