@@ -77,7 +77,7 @@ class Todo < ActiveRecord::Base
     CSV.open(file_path, 'r', headers: true).each do |csv|
       if csv['ID'].present? && csv['削除'].present?
         # 削除
-        if where(id: csv['ID']).present?
+        if find(csv['ID'])
           destroy(csv['ID'])
           puts "#{csv['ID']}を削除しました"
         else
@@ -85,9 +85,7 @@ class Todo < ActiveRecord::Base
         end
       elsif csv['ID'].present?
         # 編集
-        # TODO ヘッダーに無いシンボルに関して考える
-        # TODO idが見つからなかった場合を考える
-        target = where(id: csv['ID']).first
+        target = find(csv['ID'])
         update_attributes = Hash.new
         update_message_words = Array.new
         target_symbol_keys = target.attributes.symbolize_keys.keys
