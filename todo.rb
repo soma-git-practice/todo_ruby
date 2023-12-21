@@ -90,7 +90,8 @@ class Todo < ActiveRecord::Base
         target = where(id: csv['ID']).first
         update_attributes = Hash.new
         update_message_words = Array.new
-        set_attr = Proc.new do |sym|
+        target_symbol_keys = target.attributes.symbolize_keys.keys
+        target_symbol_keys.each do |sym|
                     # シンボルによる登録条件の分岐
                     case sym
                       when :id
@@ -106,9 +107,7 @@ class Todo < ActiveRecord::Base
                       update_message_words << HEADER[sym]
                     end
                   end
-        target_symbol_keys = target.attributes.symbolize_keys.keys
-        target_symbol_keys.each(&set_attr)
-        target.update(**update_attributes)
+        target.update(update_attributes)
         puts "#{csv['ID']}を編集しました #{update_message_words}" if update_message_words.present?
         puts "#{csv['ID']}に変更はありません" if update_message_words.blank?
       else
