@@ -53,7 +53,7 @@ class Todo < ActiveRecord::Base
   end
 
   HEADER = { id: 'ID', subject: 'だれが', place: 'どこで', object: 'なにを', verb: 'どうする', s_time: 'いつから', e_time: 'いつまで', delete: '削除' }
-  
+
   # エクスポート関連
   def self.export
     # テーブルが作成されていない場合引き返す
@@ -79,17 +79,19 @@ class Todo < ActiveRecord::Base
         # 削除
         if where(id: csv['ID']).present?
           destroy(csv['ID'])
-          puts "#{csv['ID']}を削除しました。"
+          puts "#{csv['ID']}を削除しました"
         else
-          puts "#{csv['ID']}に変更はありません。"
+          puts "#{csv['ID']}に変更はありません"
         end
       elsif csv['ID'].present?
         # 編集
         # TODO ヘッダーに無いシンボルに関して考える
+        # TODO idが見つからなかった場合を考える
         target = where(id: csv['ID']).first
-        update_attributes = {}
-        update_message_words = []
+        update_attributes = Hash.new
+        update_message_words = Array.new
         set_attr = Proc.new do |sym|
+                    # シンボルによる登録条件の分岐
                     case sym
                       when :id
                         conditions = false
@@ -98,39 +100,38 @@ class Todo < ActiveRecord::Base
                       else
                         conditions = csv[HEADER[sym]].present? && csv[HEADER[sym]] != target[sym]
                     end
+                    # 登録情報、メッセージを設定
                     if conditions
                       update_attributes[sym] = csv[HEADER[sym]]
                       update_message_words << HEADER[sym]
                     end
                   end
         target_symbol_keys = target.attributes.symbolize_keys.keys
-        target_symbol_keys.each{|item| set_attr.call(item)}
-        target.update(update_attributes)
-        puts "#{csv['ID']}を編集しました。#{update_message_words}" if update_message_words.present?
-        puts "#{csv['ID']}に変更はありません。" if update_message_words.blank?
+        target_symbol_keys.each(&set_attr)
+        target.update(**update_attributes)
+        puts "#{csv['ID']}を編集しました #{update_message_words}" if update_message_words.present?
+        puts "#{csv['ID']}に変更はありません" if update_message_words.blank?
       else
         # 新規作成
-        # TODO ヘッダーに合わせて柔軟に変化させたい
-        create(
-            subject: csv['だれが'],
-            place: csv['どこで'],
-            object: csv['なにを'],
-            verb: csv['どうする'],
-            s_time: csv['いつから'],
-            e_time: csv['いつまで']
-          )
-        puts "新規作成しました。"
+        create_attributes = Hash.new
+        attributes_keys = HEADER.except(:id, :delete).keys
+        attributes_keys.each{ |sym| create_attributes[sym] = csv[HEADER[sym]]}
+        create(**create_attributes)
+        puts "新規作成しました"
       end
     end
   end
 
-  # TODO weblickでwebサーバー作成に挑戦
 end
 
+# TODO ユーザーテーブルの作成
+# TODO CSVインポート、エクスポート時のテーブル間の関連付け
+# TODO weblickに挑戦
+
 # マイグレーションのON・OFFスイッチ
-Migrate.switch
-Migrate.switch
+Migrate.stop
+Migrate.start
 # 初期データ作成
-# Todo.setup
+Todo.setup
 
 Todo.import('csv/import.csv')
