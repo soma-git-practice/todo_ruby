@@ -1,41 +1,3 @@
-require 'active_record'
-require 'csv'
-require 'pry'
-
-# データベース接続作成
-ActiveRecord::Base.establish_connection(
-  adapter: 'sqlite3',
-  database: 'db/todo.db'
-)
-
-# データベース接続
-connection = ActiveRecord::Base.connection
-
-# テーブル操作
-class Migrate < ActiveRecord::Migration[7.0]
-  def self.start
-    create_table :todos do |t|
-      t.string :subject #だれが
-      t.string :place   #どこで
-      t.string :object  #なにを
-      t.string :verb    #どうする
-      t.string :s_time  #いつから
-      t.string :e_time  #いつまで
-    end
-    puts 'Migrate START'
-  end
-
-  def self.stop
-    drop_table :todos
-    puts 'Migrate STOP'
-  end
-
-  def self.switch
-    connection.table_exists?(:todos) ? stop : start
-  end
-end
-
-
 class Todo < ActiveRecord::Base
   def self.arrange_time(year,month,day,hour,min)
     Time.new(year, month, day, hour, min).strftime('%Y-%m-%d %H:%M')
@@ -61,8 +23,8 @@ class Todo < ActiveRecord::Base
     # DB内にレコードが存在しない場合引き返す
     return unless all.present?
 
-    FileUtils.mkdir_p('csv')
-    file_name = "csv/e#{ Time.now.strftime('%Y%m%d%H%M%S') }.csv"
+    FileUtils.mkdir_p('csv/exports')
+    file_name = "csv/exports/e#{ Time.now.strftime('%Y%m%d%H%M%S') }.csv"
     CSV.open(file_name, 'w') do |csv|
       csv << HEADER.values
       all.each{ |row| csv << row.attributes.values }
@@ -74,7 +36,7 @@ class Todo < ActiveRecord::Base
     # テーブルが作成されていない場合引き返す
     return unless connection.table_exists?(:todos)
 
-    CSV.open(file_path, 'r', headers: true).each do |csv|
+    CSV.open("csv/imports/#{file_path}", 'r', headers: true).each do |csv|
       if csv['ID'].present? && csv['削除'].present?
         # 削除
         if find(csv['ID'])
@@ -120,15 +82,3 @@ class Todo < ActiveRecord::Base
   end
 
 end
-
-# TODO ユーザーテーブルの作成
-# TODO CSVインポート、エクスポート時のテーブル間の関連付け
-# TODO weblickに挑戦
-
-# マイグレーションのON・OFFスイッチ
-Migrate.stop
-Migrate.start
-# 初期データ作成
-Todo.setup
-
-Todo.import('csv/import.csv')
