@@ -22,9 +22,4 @@ require_relative 'models/user'
 # # マイグレーションOFF
 # Migrate.stop
 
-
-
-# csv/import内の全パスを取得する
-Dir.children('csv/samples')
-# ファイル名からモデルを絞り込む　なければ異物混入警報発令
-p Dir.children('csv/samples').map{|name| name[/.*(?=\.)/].classify.constantize}
+Todo.export

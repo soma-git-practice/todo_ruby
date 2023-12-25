@@ -1,4 +1,4 @@
-class Todo < ActiveRecord::Base
+class Todo < Common
   def self.arrange_time(year,month,day,hour,min)
     Time.new(year, month, day, hour, min).strftime('%Y-%m-%d %H:%M')
   end
@@ -17,19 +17,19 @@ class Todo < ActiveRecord::Base
   HEADER = { id: 'ID', subject: 'だれが', place: 'どこで', object: 'なにを', verb: 'どうする', s_time: 'いつから', e_time: 'いつまで', delete: '削除' }
 
   # エクスポート関連
-  def self.export
-    # テーブルが作成されていない場合引き返す
-    return unless connection.table_exists?(:todos)
-    # DB内にレコードが存在しない場合引き返す
-    return unless all.present?
+  # def self.export
+  #   # テーブルが作成されていない場合引き返す
+  #   return unless connection.table_exists?(:todos)
+  #   # DB内にレコードが存在しない場合引き返す
+  #   return unless all.present?
 
-    FileUtils.mkdir_p('csv/exports')
-    file_name = "csv/exports/e#{ Time.now.strftime('%Y%m%d%H%M%S') }.csv"
-    CSV.open(file_name, 'w') do |csv|
-      csv << HEADER.values
-      all.each{ |row| csv << row.attributes.values }
-    end
-  end
+  #   FileUtils.mkdir_p('csv/exports')
+  #   file_name = "csv/exports/e#{ Time.now.strftime('%Y%m%d%H%M%S') }.csv"
+  #   CSV.open(file_name, 'w') do |csv|
+  #     csv << HEADER.values
+  #     all.each{ |row| csv << row.attributes.values }
+  #   end
+  # end
 
   # インポート関連
   def self.import(file_path)
