@@ -18,11 +18,16 @@ class Migrate < ActiveRecord::Migration[7.0]
       t.string :s_time  #いつから
       t.string :e_time  #いつまで
     end
+    
+    # create_table :users do |t|
+    #   t.string :name    #名前
+    # end
     puts 'Migrate START'
   end
 
   def self.stop
     drop_table :todos
+    # drop_table :users
     puts 'Migrate STOP'
   end
 
@@ -31,33 +36,20 @@ class Migrate < ActiveRecord::Migration[7.0]
   end
 end
 
-HEADER = {
-  todo: {
-    id:      { name: 'ID' },
-    subject: { name: 'だれが',   allow_nil: false, option: false },
-    place:   { name: 'どこで',   allow_nil: false, option: false },
-    object:  { name: 'なにを',   allow_nil: false, option: false },
-    verb:    { name: 'どうする',  allow_nil: false, option: false },
-    s_time:  { name: 'いつから',  allow_nil: true,  option: false },
-    e_time:  { name: 'いつまで',  allow_nil: true,  option: false },
-    delete:  { name: '削除',     allow_nil: true,  option: true },
-  },
-  user: {}
-}
 
 class Common < ActiveRecord::Base
-  def self.export
-    # テーブルが作成されていない場合引き返す
-    table = model_name.plural
-    return unless $connection.table_exists?( table )
-    FileUtils.mkdir_p('csv/exports')
-    file_name = "csv/exports/#{model_name.singular}_#{Time.now.strftime('%Y%m%d%H%M%S')}.csv"
+  self.abstract_class = true #この一行重要
 
-    CSV.open(file_name, 'w') do |csv|
-      HEADER[model_name.singular.to_sym].each do |key, val|
-        csv  << val[:name]
-      end
+  def self.export
+    return p "#{self}テーブルはデータベースはありません。" unless $connection.table_exists?( self.name.downcase.pluralize )
+    return p "#{self}テーブルは空っぽです。" if all.blank?
+
+    header_keys = @header.keys
+    csv_header = header_keys.map{|sym| @header[sym][:name]}
+    FileUtils.mkdir_p('csv/exports')
+    CSV.open("csv/exports/#{self.name.downcase}_#{Time.now.strftime('%Y%m%d%H%M%S')}.csv", 'w') do |csv|
+      csv << csv_header
+      all.each{|record| csv << header_keys.map{|sym| record[sym]}}
     end
-    binding.pry
   end
 end
