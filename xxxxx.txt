@@ -5,7 +5,7 @@ def get_models_from_csv(dir_path)
     basename_string = path[/.*(?=\.csv)/]
     table_sym = basename_string.pluralize.to_sym
     # テーブルがあれば、モデルを呼び出す
-    $connection.table_exists?(table_sym) ? basename_string.classify.constantize : nil
+    connection.table_exists?(table_sym) ? basename_string.classify.constantize : nil
   end
 
   value = Dir.children(dir_path).map(&proc_for_array).compact

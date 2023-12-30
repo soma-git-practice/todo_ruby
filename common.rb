@@ -5,7 +5,7 @@ ActiveRecord::Base.establish_connection(
 )
 
 # データベース接続
-$connection = ActiveRecord::Base.connection
+connection = ActiveRecord::Base.connection
 
 # テーブル操作
 class Migrate < ActiveRecord::Migration[7.0]
@@ -37,7 +37,7 @@ class Common < ActiveRecord::Base
   self.abstract_class = true #この一行重要
 
   def self.export
-    return p "#{self}テーブルはデータベースはありません。" unless $connection.table_exists?( self.name.downcase.pluralize )
+    return p "#{self}テーブルはデータベースはありません。" unless connection.table_exists?( self.name.downcase.pluralize )
     return p "#{self}テーブルは空っぽです。" if all.blank?
 
     header_keys = @header.keys
@@ -50,7 +50,7 @@ class Common < ActiveRecord::Base
   end
 
   def self.import(file_name = 'import.csv')
-    return p "#{self}テーブルはデータベースはありません。" unless $connection.table_exists?( self.name.downcase.pluralize )
+    return p "#{self}テーブルはデータベースはありません。" unless connection.table_exists?( self.name.downcase.pluralize )
     FileUtils.mkdir_p('csv/imports')
     CSV.open("csv/imports/#{file_name}", 'r', headers: true).each do |csv|
       if csv[@header[:delete][:name]].present? && csv[@header[:id][:name]].present?
