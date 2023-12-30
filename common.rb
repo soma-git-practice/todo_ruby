@@ -52,4 +52,52 @@ class Common < ActiveRecord::Base
       all.each{|record| csv << header_keys.map{|sym| record[sym]}}
     end
   end
+
+  def self.import
+    return p "#{self}テーブルはデータベースはありません。" unless $connection.table_exists?( self.name.downcase.pluralize )
+
+    CSV.open('csv/imports/import.csv', 'r', headers: true).each do |csv|
+      if csv[@header[:delete][:name]].present? && csv[@header[:id][:name]].present?
+        target = find_by(id: csv[@header[:id][:name]])
+        target.delete if target.present?
+      elsif csv[@header[:delete][:name]].present?
+        p '削除にはIDが必要'
+      elsif csv[@header[:id][:name]].present?
+        # 更新するデータの取得
+        target = find_by(id: csv[@header[:id][:name]])
+        return p 'そのIDのデータは、データベースに存在していません。' if target.blank?
+
+        # 更新の際に使用する
+        update_hash = Hash.new
+
+        @header.keys.each do |sym|
+          # optionがtrueの場合、 更新前のデータと更新用のデータが等しい場合
+          next if @header[sym][:option] || target[sym] == csv[@header[sym][:name]]
+
+          # 条件 = 空を許さない && 更新用のデータが空の場合
+          conditions = @header[sym][:allow_nil] == false && csv[@header[sym][:name]].blank?
+          next p "#{@header[sym][:name]}：何か入力して" if conditions
+
+          update_hash[sym] = csv[@header[sym][:name]]
+        end
+
+        if update_hash.present?
+          update_keywords = update_hash.keys.map{|sym| @header[sym][:name]}
+          p "id: #{target.id} の「#{update_keywords.join('、')}」を変更しました。"
+          target.update(update_hash)
+        else
+          p "#{target.id}に変更はありません。"
+        end
+      else
+        create_attributes = Hash.new
+        @header.keys.each do |sym|
+          next if @header[sym][:option]
+          return p "#{@header[sym][:name]}：何か入力して" if @header[sym][:allow_nil] == false && csv[@header[sym][:name]].blank?
+          create_attributes[sym] = csv[@header[sym][:name]]
+        end
+        create create_attributes
+        p "レコードを作成しました"
+      end
+    end
+  end
 end
