@@ -54,8 +54,6 @@ class Common < ActiveRecord::Base
   end
 
   def self.import(file_name = 'import.csv')
-    # TODO データに一つでも不備があれば変更を取り消したい。
-    # TODO 複数行の場合、変更箇所が分かりづらいため要修正
     return p "#{self}テーブルはデータベースはありません。" unless $connection.table_exists?( self.name.downcase.pluralize )
     FileUtils.mkdir_p('csv/imports')
     CSV.open("csv/imports/#{file_name}", 'r', headers: true).each do |csv|
