@@ -14,15 +14,7 @@ require_relative 'models/user'
 # # マイグレーションのON
 # Migrate.start
 
-# # サンプルデータ読み込み
-# Todo.setup
-
-# Todo.import('import.csv')
-
 # # マイグレーションOFF
 # Migrate.stop
 
-# Todo.create(subject: 'me', place: '公園', object: 'ボール', verb: '蹴る', s_time: '2023-12-10', e_time: '2023-12-20')
-# User.create(name: '山田太郎')
-
-Todo.import
+# User.import('user.csv')

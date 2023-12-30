@@ -19,20 +19,16 @@ class Migrate < ActiveRecord::Migration[7.0]
       t.string :e_time  #いつまで
     end
     
-    # create_table :users do |t|
-    #   t.string :name    #名前
-    # end
+    create_table :users do |t|
+      t.string :name    #名前
+    end
     puts 'Migrate START'
   end
 
   def self.stop
     drop_table :todos
-    # drop_table :users
+    drop_table :users
     puts 'Migrate STOP'
-  end
-
-  def self.switch
-    $connection.table_exists?(:todos) ? stop : start
   end
 end
 
