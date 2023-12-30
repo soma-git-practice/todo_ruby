@@ -53,50 +53,56 @@ class Common < ActiveRecord::Base
     end
   end
 
-  def self.import
+  def self.import(file_name = 'import.csv')
+    # TODO データに一つでも不備があれば変更を取り消したい。
+    # TODO 複数行の場合、変更箇所が分かりづらいため要修正
     return p "#{self}テーブルはデータベースはありません。" unless $connection.table_exists?( self.name.downcase.pluralize )
-
-    CSV.open('csv/imports/import.csv', 'r', headers: true).each do |csv|
+    FileUtils.mkdir_p('csv/imports')
+    CSV.open("csv/imports/#{file_name}", 'r', headers: true).each do |csv|
       if csv[@header[:delete][:name]].present? && csv[@header[:id][:name]].present?
-        target = find_by(id: csv[@header[:id][:name]])
-        target.delete if target.present?
+        # 削除
+          target = find_by(id: csv[@header[:id][:name]])
+          next target.delete if target.present?
+          puts "ID：#{csv[@header[:id][:name]]}がデータベースに存在していないため削除できません。"
+        # 削除
       elsif csv[@header[:delete][:name]].present?
-        p '削除にはIDが必要'
+        # その他
+          puts '削除にはIDが必要'
+        # その他
       elsif csv[@header[:id][:name]].present?
-        # 更新するデータの取得
-        target = find_by(id: csv[@header[:id][:name]])
-        return p 'そのIDのデータは、データベースに存在していません。' if target.blank?
-
-        # 更新の際に使用する
-        update_hash = Hash.new
-
-        @header.keys.each do |sym|
-          # optionがtrueの場合、 更新前のデータと更新用のデータが等しい場合
-          next if @header[sym][:option] || target[sym] == csv[@header[sym][:name]]
-
-          # 条件 = 空を許さない && 更新用のデータが空の場合
-          conditions = @header[sym][:allow_nil] == false && csv[@header[sym][:name]].blank?
-          next p "#{@header[sym][:name]}：何か入力して" if conditions
-
-          update_hash[sym] = csv[@header[sym][:name]]
-        end
-
-        if update_hash.present?
-          update_keywords = update_hash.keys.map{|sym| @header[sym][:name]}
-          p "id: #{target.id} の「#{update_keywords.join('、')}」を変更しました。"
-          target.update(update_hash)
-        else
-          p "#{target.id}に変更はありません。"
-        end
+        # 編集
+          # 更新するデータの取得
+          target = find_by(id: csv[@header[:id][:name]])
+          next puts "ID：#{csv[@header[:id][:name]]}がデータベースに存在していないため編集できません。" if target.blank?
+          # 更新の際に使用する
+          update_hash = Hash.new
+          @header.keys.each do |sym|
+            # optionがtrueの場合、 更新前のデータと更新用のデータが等しい場合
+            next if @header[sym][:option] || target[sym] == csv[@header[sym][:name]]
+            # 条件 = 空を許さない && 更新用のデータが空の場合
+            conditions = @header[sym][:allow_nil] == false && csv[@header[sym][:name]].blank?
+            return puts "#{@header[sym][:name]}：何か入力して" if conditions
+            update_hash[sym] = csv[@header[sym][:name]]
+          end
+          if update_hash.present?
+            update_keywords = update_hash.keys.map{|sym| @header[sym][:name]}
+            puts "id: #{target.id} の「#{update_keywords.join('、')}」を変更しました。"
+            target.update(update_hash)
+          else
+            puts "#{target.id}に変更はありません。"
+          end
+        # 編集
       else
-        create_attributes = Hash.new
-        @header.keys.each do |sym|
-          next if @header[sym][:option]
-          return p "#{@header[sym][:name]}：何か入力して" if @header[sym][:allow_nil] == false && csv[@header[sym][:name]].blank?
-          create_attributes[sym] = csv[@header[sym][:name]]
-        end
-        create create_attributes
-        p "レコードを作成しました"
+        # 作成
+          create_attributes = Hash.new
+          @header.keys.each do |sym|
+            next if @header[sym][:option]
+            return p "#{@header[sym][:name]}：何か入力して" if @header[sym][:allow_nil] == false && csv[@header[sym][:name]].blank?
+            create_attributes[sym] = csv[@header[sym][:name]]
+          end
+          create create_attributes
+          p "レコードを作成しました"
+        # 作成
       end
     end
   end
