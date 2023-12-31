@@ -17,4 +17,4 @@ require_relative 'models/user'
 # # マイグレーションOFF
 # Migrate.stop
 
-# User.import('user.csv')
+User.import('user.csv')
