@@ -31,6 +31,3 @@ srv.mount_proc('/view') do |_req, res|
 end
 trap("INT"){ srv.shutdown }
 srv.start
-
-# # マイグレーションOFF
-# Migrate.stop

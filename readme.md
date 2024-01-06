@@ -31,8 +31,10 @@
 ### ５ ブラウザに表示
 完了：webrickでindex.htmlを表示する
 <br>完了：外部erbファイルを使う
-<br>途中：webrickでerbファイルを使う
-<br>ーー：webrickで、できることを探る
+<br>完了：webrickでerbファイルを使う
+<br>ーー：フォームを作成し、やりとりしてみる
+<br>ーー：basic認証
+<br>ーー：digest認証
 <br>ーー：テストコードの追加
 
 ### ６ Nokogiriに触れる
