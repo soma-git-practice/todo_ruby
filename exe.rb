@@ -23,32 +23,12 @@ if User.all.blank?
 end
 
 # webサーバー作成
-srv = WEBrick::HTTPServer.new({ :DocumentRoot => './index.html', :BindAddress => '127.0.0.1', :Port => 20080})
-srv.mount_proc('/') do |_req, res|
-  body = ERB.new(<<~'EOS', trim_mode: '-').result
-  <!DOCTYPE html>
-  <html lang='en'>
-    <head>
-      <meta charset='UTF-8'>
-      <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-      <title></title>
-    </head>
-    <body>
-      <h1>参加者一覧</h1>
-      <ul>
-        <%- User.all.each do |item| -%>
-        <li><%= item.name %></li>
-        <%- end -%>
-      </ul>
-    </body>
-  </html>
-  EOS
-
+srv = WEBrick::HTTPServer.new({ :DocumentRoot => './views/index.html', :BindAddress => '127.0.0.1', :Port => 20080})
+srv.mount_proc('/view') do |_req, res|
   res.status = 200
-  res['Content-Type'] = 'text/html'
-  res.body = body
+  res.content_type = 'text/html'
+  res.body = ERB.new( File.read('views/user.html.erb') , trim_mode: '-').result
 end
-
 trap("INT"){ srv.shutdown }
 srv.start
 
