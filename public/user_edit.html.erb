@@ -7,10 +7,10 @@
     <title></title>
   </head>
   <body>
-    <h1>追加</h1>
-    <form action="/new" method="post">
+    <h1>編集</h1>
+    <form action="./edit" method="post">
       <label for="user_name">名前</label>
-      <input type="text" id="user_name" name="name" />
+      <input type="text" id="user_name" name="name" value="<%= @view_item.name %>" />
       <button type='submit'>登録</button>
     </form>
     <a href="/">ホーム</a>
