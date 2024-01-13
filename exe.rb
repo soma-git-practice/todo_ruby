@@ -62,16 +62,28 @@ mount_edit = ->(item) do
   end
 end
 
+mount_delete = ->(item) do
+  srv.mount_proc("/#{item.id}/delete") do |req, res|
+    User.delete(item.id)
+    srv.unmount("/#{item.id}/edit")
+    srv.unmount("/#{item.id}/delete")
+    res.set_redirect(WEBrick::HTTPStatus::MovedPermanently, '/')
+  end
+end
+
+# 追加
 srv.mount_proc('/new') do |req, res|
   if req.query['name'].present?
     user = User.create(name: unescape(req.query['name']))
     mount_edit.call(user)
+    mount_delete.call(user)
     res.set_redirect(WEBrick::HTTPStatus::MovedPermanently, '/')
   end
   res.body = ERB.new( File.read('public/user_new.html.erb') , trim_mode: '-').result
 end
 
 User.all.each(&mount_edit)
+User.all.each(&mount_delete)
 
 trap("INT"){ srv.shutdown }
 srv.start

@@ -8,11 +8,15 @@
   </head>
   <body>
     <h1>参加者一覧</h1>
-    <ul>
+    <table>
       <%- User.all.each do |item| -%>
-      <li><a href="/<%= item.id %>/edit"><%= item.name %></a></li>
+      <tr>
+        <th><%= item.name %></th>
+        <td><a href="/<%= item.id %>/edit">編集</a></td>
+        <td><a href="/<%= item.id %>/delete">削除</a></td>
+      </tr>
       <%- end -%>
-    </ul>
+    </table>
     <a href="/user_new.html.erb">追加</a>
   </body>
 </html>
