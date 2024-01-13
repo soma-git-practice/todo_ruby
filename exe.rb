@@ -51,24 +51,27 @@ def unescape(string)
   str.valid_encoding? ? str : str.force_encoding(string.Encoding::UTF_8)
 end
 
-srv.mount_proc('/new') do |req, res|
-  if req.query['name'].present?
-    User.create(name: unescape(req.query['name']))
-    res.set_redirect(WEBrick::HTTPStatus::MovedPermanently, '/')
-  end
-  res.body = ERB.new( File.read('public/user_new.html.erb') , trim_mode: '-').result
-end
-
-User.all.each do |user| #=> TODO 新規作成したユーザーを編集しようとすると404エラーになる。作成したものは、マウントしないからだ。
-  srv.mount_proc("/#{user.id}/edit") do |req, res|
-    @view_item = user
-    if req.query['name'].present? && user.name != (update_value = unescape(req.query['name'])) #=> req.query['name'].encode("UTF-8")でエラーになる理由
-      User.update(user.id, name: update_value)
+mount_edit = ->(item) do
+  srv.mount_proc("/#{item.id}/edit") do |req, res|
+    @view_item = item
+    if req.query['name'].present? && item.name != (update_value = unescape(req.query['name'])) #=> req.query['name'].encode("UTF-8")でエラーになる理由
+      User.update(item.id, name: update_value)
       res.set_redirect(WEBrick::HTTPStatus::MovedPermanently, '/')
     end
     res.body = ERB.new( File.read('public/user_edit.html.erb') , trim_mode: '-').result
   end
 end
+
+srv.mount_proc('/new') do |req, res|
+  if req.query['name'].present?
+    user = User.create(name: unescape(req.query['name']))
+    mount_edit.call(user)
+    res.set_redirect(WEBrick::HTTPStatus::MovedPermanently, '/')
+  end
+  res.body = ERB.new( File.read('public/user_new.html.erb') , trim_mode: '-').result
+end
+
+User.all.each(&mount_edit)
 
 trap("INT"){ srv.shutdown }
 srv.start
