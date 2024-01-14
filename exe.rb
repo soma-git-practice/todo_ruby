@@ -11,8 +11,8 @@ require_relative 'models/todo'
 require_relative 'models/user'
 
 # マイグレーションのON
-# Migrate.stop
-# Migrate.start
+Migrate.stop
+Migrate.start
 
 if User.all.blank?
   User.create(name: '田中太郎')
@@ -54,9 +54,9 @@ end
 mount_edit = ->(item) do
   srv.mount_proc("/#{item.id}/edit") do |req, res|
     @view_item = item
-    if req.query['name'].present? && item.name != (update_value = unescape(req.query['name'])) #=> req.query['name'].encode("UTF-8")でエラーになる理由
+    if req.query['name'].present? && item.name != (update_value = unescape(req.query['name'])) #=> TODO：req.query['name'].encode("UTF-8")でエラーになる理由
       User.update(item.id, name: update_value)
-      res.set_redirect(WEBrick::HTTPStatus::MovedPermanently, '/')
+      res.set_redirect(WEBrick::HTTPStatus::SeeOther, '/')
     end
     res.body = ERB.new( File.read('public/user_edit.html.erb') , trim_mode: '-').result
   end
@@ -67,7 +67,7 @@ mount_delete = ->(item) do
     User.delete(item.id)
     srv.unmount("/#{item.id}/edit")
     srv.unmount("/#{item.id}/delete")
-    res.set_redirect(WEBrick::HTTPStatus::MovedPermanently, '/')
+    res.set_redirect(WEBrick::HTTPStatus::SeeOther, '/') #=> メモ：301リダイレクトはキャッシュが残る
   end
 end
 
@@ -77,7 +77,7 @@ srv.mount_proc('/new') do |req, res|
     user = User.create(name: unescape(req.query['name']))
     mount_edit.call(user)
     mount_delete.call(user)
-    res.set_redirect(WEBrick::HTTPStatus::MovedPermanently, '/')
+    res.set_redirect(WEBrick::HTTPStatus::SeeOther, '/')
   end
   res.body = ERB.new( File.read('public/user_new.html.erb') , trim_mode: '-').result
 end
