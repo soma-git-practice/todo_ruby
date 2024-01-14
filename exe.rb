@@ -51,7 +51,7 @@ def unescape(string)
   str.valid_encoding? ? str : str.force_encoding(string.Encoding::UTF_8)
 end
 
-mount_edit = ->(item) do
+dynamic_mount = ->(item) do
   srv.mount_proc("/#{item.id}/edit") do |req, res|
     @view_item = item
     if req.query['name'].present? && item.name != (update_value = unescape(req.query['name'])) #=> TODO：req.query['name'].encode("UTF-8")でエラーになる理由
@@ -60,9 +60,6 @@ mount_edit = ->(item) do
     end
     res.body = ERB.new( File.read('public/user_edit.html.erb') , trim_mode: '-').result
   end
-end
-
-mount_delete = ->(item) do
   srv.mount_proc("/#{item.id}/delete") do |req, res|
     User.delete(item.id)
     srv.unmount("/#{item.id}/edit")
@@ -75,15 +72,13 @@ end
 srv.mount_proc('/new') do |req, res|
   if req.query['name'].present?
     user = User.create(name: unescape(req.query['name']))
-    mount_edit.call(user)
-    mount_delete.call(user)
+    dynamic_mount.call(user)
     res.set_redirect(WEBrick::HTTPStatus::SeeOther, '/')
   end
   res.body = ERB.new( File.read('public/user_new.html.erb') , trim_mode: '-').result
 end
 
-User.all.each(&mount_edit)
-User.all.each(&mount_delete)
+User.all.each(&dynamic_mount)
 
 trap("INT"){ srv.shutdown }
 srv.start
