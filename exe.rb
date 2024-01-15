@@ -22,6 +22,15 @@ if User.all.blank?
   User.create(name: '伊東圭吾')
   User.create(name: '井上佳代子')
   User.create(name: '竹田宏治')
+  User.create(name: '愛知味噌ノ介')
+  User.create(name: '長野蕎麦子')
+  User.create(name: '札幌魚太郎')
+  User.create(name: '東京バナ男')
+  User.create(name: '大阪通天閣')
+  User.create(name: '沖縄海人')
+  User.create(name: '新潟米味')
+  User.create(name: '滋賀池丸')
+  User.create(name: '山田富士丈')
 end
 
 # webサーバー作成
