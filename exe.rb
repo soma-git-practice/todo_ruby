@@ -9,6 +9,7 @@ require 'erb'
 require_relative 'common'
 require_relative 'models/todo'
 require_relative 'models/user'
+require_relative 'config'
 
 # マイグレーションのON
 Migrate.stop
@@ -38,7 +39,7 @@ class UserERBHandler < WEBrick::HTTPServlet::AbstractServlet
 end
 WEBrick::HTTPServlet::FileHandler.add_handler("erb", UserERBHandler)
 
-srv = WEBrick::HTTPServer.new({ DocumentRoot: 'public', DirectoryIndex: ['user.html.erb'], :BindAddress => '127.0.0.1', :Port => 20080, :ServerName => 'マイサーバー' })
+srv = WEBrick::HTTPServer.new(ServerConfig.data)
 
 # CGI.unescape https://github.com/ruby/cgi/blob/929e6264b519a6b6d1487d0ba5cea48579dc3c0d/lib/cgi/util.rb#L27C3-L35C6
 def unescape(string)
@@ -53,9 +54,9 @@ end
 
 dynamic_mount = ->(item) do
   srv.mount_proc("/#{item.id}/edit") do |req, res|
-    @view_item = item
-    if req.query['name'].present? && item.name != (update_value = unescape(req.query['name'])) #=> TODO：req.query['name'].encode("UTF-8")でエラーになる理由
-      User.update(item.id, name: update_value)
+    @view_item = User.find(item.id)
+    if req.query['name'].present? && @view_item.name != (update_value = unescape(req.query['name'])) #=> TODO：req.query['name'].encode("UTF-8")でエラーになる理由
+      User.update(@view_item.id, name: update_value)
       res.set_redirect(WEBrick::HTTPStatus::SeeOther, '/')
     end
     res.body = ERB.new( File.read('public/user_edit.html.erb') , trim_mode: '-').result
