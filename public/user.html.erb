@@ -8,15 +8,10 @@
   </head>
   <body>
     <h1>参加者一覧</h1>
-    <table>
-      <%- User.all.each do |item| -%>
-      <tr>
-        <th><%= item.name %></th>
-        <td><a href="/<%= item.id %>/edit">編集</a></td>
-        <td><a href="/<%= item.id %>/delete">削除</a></td>
-      </tr>
-      <%- end -%>
-    </table>
-    <a href="/user_new.html.erb">追加</a>
+    <table id="content"></table>
+    <a href="new">追加</a>
+    <div class="buttons"></div>
+
+    <script src="./javascripts/paging.js"></script>
   </body>
 </html>

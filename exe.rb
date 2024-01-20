@@ -90,5 +90,18 @@ end
 
 User.all.each(&dynamic_mount)
 
+# ajax
+srv.mount_proc('/ajax') do |req, res|
+  if req.query['page'].present?
+    all_user = User.all
+    split_users = all_user.each_slice(req.query['per'].to_i).to_a
+    users = split_users[req.query['page'].to_i - 1]
+    users = users.each_with_object({total: split_users.size, items: {}}) do |user,hash|
+              hash[:items][user.id] = user.name
+            end
+    res.body = JSON[users]
+  end
+end
+
 trap("INT"){ srv.shutdown }
 srv.start
