@@ -44,19 +44,6 @@ class Common < ActiveRecord::Base
   end
 
   def self.export
-    return p "#{self}テーブルはデータベースはありません。" unless connection.table_exists?( self.name.downcase.pluralize )
-    return p "#{self}テーブルは空っぽです。" if all.blank?
-
-    header_keys = header.keys
-    csv_header = header_keys.map{|sym| header[sym][:name]}
-    FileUtils.mkdir_p('csv/exports')
-    CSV.open("csv/exports/#{self.name.downcase}_#{Time.now.strftime('%Y%m%d%H%M%S')}.csv", 'w') do |csv|
-      csv << csv_header
-      all.each{|record| csv << header_keys.map{|sym| record[sym]}}
-    end
-  end
-
-  def self.csv
     unless connection.table_exists?(self.name.downcase.pluralize)
       p self.name + "テーブルはデータベースはありません。"
       return
@@ -67,14 +54,14 @@ class Common < ActiveRecord::Base
       return
     end
 
-    header_keys = header.keys
-    column = CSV::Row.new(header_keys.map { |sym| header[sym][:name] }, [], header_row: true)
+    keys = header.keys
+    column = CSV::Row.new(keys.map { |sym| header[sym][:name] }, [], header_row: true)
     field = all.map do |record|
-      value_hash = header_keys.each_with_object({title: [], body: []}) do |key, hash|
+      value = keys.each_with_object({title: [], body: []}) do |key, hash|
                     hash[:title] << header[key][:name]
                     hash[:body] << record[key]
                   end
-      CSV::Row.new( value_hash[:title], value_hash[:body])
+      CSV::Row.new( value[:title], value[:body])
     end
     CSV::Table.new([column, *field])
   end
