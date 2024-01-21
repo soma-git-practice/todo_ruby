@@ -103,5 +103,12 @@ srv.mount_proc('/ajax') do |req, res|
   end
 end
 
+# CSV Export
+srv.mount_proc('/export') do |req, res|
+  res.header["Content-Disposition"] = 'inline;filename="users.csv"'
+  res.header["Content-Type"] = "text/csv"
+  res.body = User.export.to_csv
+end
+
 trap("INT"){ srv.shutdown }
 srv.start
