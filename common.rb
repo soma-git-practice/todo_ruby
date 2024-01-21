@@ -56,6 +56,29 @@ class Common < ActiveRecord::Base
     end
   end
 
+  def self.csv
+    unless connection.table_exists?(self.name.downcase.pluralize)
+      p self.name + "テーブルはデータベースはありません。"
+      return
+    end
+
+    if all.blank?
+      p self.name + "テーブルは空っぽです。"
+      return
+    end
+
+    header_keys = header.keys
+    column = CSV::Row.new(header_keys.map { |sym| header[sym][:name] }, [], header_row: true)
+    field = all.map do |record|
+      value_hash = header_keys.each_with_object({title: [], body: []}) do |key, hash|
+                    hash[:title] << header[key][:name]
+                    hash[:body] << record[key]
+                  end
+      CSV::Row.new( value_hash[:title], value_hash[:body])
+    end
+    CSV::Table.new([column, *field])
+  end
+
   def self.import(file_name = 'import.csv')
     return p "#{self}テーブルはデータベースはありません。" unless connection.table_exists?( self.name.downcase.pluralize )
     FileUtils.mkdir_p('csv/imports')
