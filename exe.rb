@@ -112,7 +112,7 @@ end
 
 # CSV Import
 srv.mount_proc('/import') do |req, res|
-  recieve = req.query['avatar'].force_encoding Encoding::UTF_8
+  recieve = unescape req.query['avatar']
   recieve = CSV.new(recieve, headers: true).read
   User.import recieve
   res.set_redirect(WEBrick::HTTPStatus::SeeOther, '/')
