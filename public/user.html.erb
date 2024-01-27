@@ -5,15 +5,20 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title></title>
+    <%# <link rel="stylesheet" href="styles/destyle.css"> %>
+    <%# <link rel="stylesheet" href="styles/user.css"> %>
   </head>
   <body>
     <h1>参加者一覧</h1>
-    <form action="export" method="get">
-      <button type='submit'>エクスポート</button>
-    </form>
     <table id="content"></table>
     <a href="new">追加</a>
     <div class="buttons"></div>
+    <br>
+    <a href="export" download>エクスポート</a>
+    <form action="import" method="post" enctype="multipart/form-data">
+      <input type="file" name="avatar" accept="text/csv" />
+      <button type='submit'>インポート</button>
+    </form>
 
     <script src="./javascripts/paging.js"></script>
   </body>

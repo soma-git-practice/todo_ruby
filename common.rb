@@ -49,27 +49,30 @@ class Common < ActiveRecord::Base
       return
     end
 
-    if all.blank?
+    if self.all.blank?
       p self.name + "テーブルは空っぽです。"
       return
     end
 
-    keys = header.keys
-    column = CSV::Row.new(keys.map { |sym| header[sym][:name] }, [], header_row: true)
-    field = all.map do |record|
+    keys = self.header.keys
+    column = CSV::Row.new(keys.map { |sym| self.header[sym][:name] }, [], header_row: true)
+    row = self.all.map do |record|
       value = keys.each_with_object({title: [], body: []}) do |key, hash|
-                    hash[:title] << header[key][:name]
+                    hash[:title] << self.header[key][:name]
                     hash[:body] << record[key]
                   end
       CSV::Row.new( value[:title], value[:body])
     end
-    CSV::Table.new([column, *field])
+    CSV::Table.new([column, *row])
   end
 
-  def self.import(file_name = 'import.csv')
-    return p "#{self}テーブルはデータベースはありません。" unless connection.table_exists?( self.name.downcase.pluralize )
-    FileUtils.mkdir_p('csv/imports')
-    CSV.open("csv/imports/#{file_name}", 'r', headers: true).each do |csv|
+  def self.import(csv_data)
+    unless connection.table_exists?( self.name.downcase.pluralize )
+      p "#{self}テーブルはデータベースはありません。" 
+      return
+    end
+
+    csv_data.each do |csv|
       if csv[header[:delete][:name]].present? && csv[header[:id][:name]].present?
         # 削除
           target = find_by(id: csv[header[:id][:name]])

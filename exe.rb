@@ -110,5 +110,13 @@ srv.mount_proc('/export') do |req, res|
   res.body = User.export.to_csv
 end
 
+# CSV Import
+srv.mount_proc('/import') do |req, res|
+  recieve = req.query['avatar'].force_encoding Encoding::UTF_8
+  recieve = CSV.new(recieve, headers: true).read
+  User.import recieve
+  res.set_redirect(WEBrick::HTTPStatus::SeeOther, '/')
+end
+
 trap("INT"){ srv.shutdown }
 srv.start
