@@ -105,7 +105,7 @@ end
 
 # CSV Export
 srv.mount_proc('/export') do |req, res|
-  res.header["Content-Disposition"] = 'inline;filename="users.csv"'
+  res.header["Content-Disposition"] = 'attachment;filename="users.csv"'
   res.header["Content-Type"] = "text/csv"
   res.body = User.export.to_csv
 end
