@@ -16,8 +16,10 @@ ending_of_the_month   = Date.new(*origin_ym, -1)
 
 during = begining_of_the_month..ending_of_the_month
 
+# ↓気に入らない
 w = ['SUND', 'MOND', 'TUES', 'WEDE', 'THUR', 'FRID', 'SATU']
 w += (0...during.first.wday).map{ '  ' } + during.map { |day| "%02d" % day.day } + Array.new(6 - during.last.wday, '  ')
+# ↑気に入らない
 
 # 最大文字数を計算
 max_value = w.map(&:length).max
