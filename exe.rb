@@ -33,6 +33,14 @@ if User.all.blank?
   User.create(name: '山田富士丈')
 end
 
+if Todo.all.blank?
+  Todo.create(date: Date.today + 1, todo: 'hoge1')
+  Todo.create(date: Date.today + 2, todo: 'hoge2')
+  Todo.create(date: Date.today + 3, todo: 'hoge3')
+  Todo.create(date: Date.today + 4, todo: 'hoge4')
+  Todo.create(date: Date.today + 5, todo: 'hoge5')
+end
+
 # webサーバー作成
 class UserERBHandler < WEBrick::HTTPServlet::AbstractServlet
   def initialize(server, name)
@@ -116,6 +124,43 @@ srv.mount_proc('/import') do |req, res|
   recieve = CSV.new(recieve, headers: true).read
   User.import recieve
   res.set_redirect(WEBrick::HTTPStatus::SeeOther, '/')
+end
+
+# Calendar
+srv.mount_proc('/calendar') do |req, res|
+  origin = Date.today
+  origin_ym = origin.year, origin.month
+  begining_of_the_month = Date.new(*origin_ym, +1)
+  ending_of_the_month   = Date.new(*origin_ym, -1)
+  during = begining_of_the_month..ending_of_the_month
+  day_hash = during.group_by(&:wday)
+  day_array = (0..6).map{|i| day_hash[i]}
+  day_array.each do |item|
+    break if item.first.day == 1
+    item.prepend ''
+  end
+
+  index = count = 0
+  @value = []
+  while true
+    break if day_array[index % 7][count] == nil
+    if day_array[index % 7][count].is_a?(Date)
+      @value << {
+        date: day_array[index % 7][count].day,
+        todo: Todo.find_by(date: day_array[index % 7][count]).try(:todo)
+      }
+    else
+      @value << {
+        date: nil,
+        todo: nil
+      }
+    end
+    index += 1
+    count += 1 if index > 6 && index % 7 == 0
+  end
+  @value = @value.each_slice(7).to_a
+  @month = origin.month
+  res.body = ERB.new( File.read('public/calendar.html.erb') , trim_mode: '-').result
 end
 
 trap("INT"){ srv.shutdown }

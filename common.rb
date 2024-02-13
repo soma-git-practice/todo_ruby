@@ -11,12 +11,8 @@ connection = ActiveRecord::Base.connection
 class Migrate < ActiveRecord::Migration[7.0]
   def self.start
     create_table :todos do |t|
-      t.string :subject #だれが
-      t.string :place   #どこで
-      t.string :object  #なにを
-      t.string :verb    #どうする
-      t.string :s_time  #いつから
-      t.string :e_time  #いつまで
+      t.string :date #日付
+      t.string :todo #TODO
     end
     
     create_table :users do |t|

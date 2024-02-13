@@ -1,0 +1,41 @@
+h1 {
+  padding: 20px;
+  font-size: 45px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+}
+
+.calendar {
+  justify-content: center;
+  display: grid;
+  gap: 5px;
+  grid-template-columns: 130px 130px 130px 130px 130px 130px 130px;
+}
+
+.calendar-day {
+  text-align: center;
+  background-color: #999;
+  color: #fff;
+  padding: 6px;
+}
+
+.calendar-item {
+  text-align: center;
+  background-color: #f6f6f6;
+  min-height: 100px;
+}
+
+.calendar-item-date {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  min-height: 35px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.calendar-item-todo {
+  height: calc(100% - 35px);
+  padding: 5px;
+}
