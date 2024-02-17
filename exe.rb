@@ -133,6 +133,7 @@ srv.mount_proc('/calendar') do |req, res|
   begining_of_the_month = Date.new(*origin_ym, +1)
   ending_of_the_month   = Date.new(*origin_ym, -1)
   during = begining_of_the_month..ending_of_the_month
+
   day_hash = during.group_by(&:wday)
   day_array = (0..6).map{|i| day_hash[i]}
   day_array.each do |item|
@@ -160,7 +161,9 @@ srv.mount_proc('/calendar') do |req, res|
   end
   @value = @value.each_slice(7).to_a
   @month = origin.month
-  res.body = ERB.new( File.read('public/calendar.html.erb') , trim_mode: '-').result
+  @style = ["destyle", "calendar"]
+  @body  = ERB.new( File.read('public/calendar.html.erb') , trim_mode: '-').result
+  res.body = ERB.new( File.read('public/template.html.erb') , trim_mode: '-').result
 end
 
 trap("INT"){ srv.shutdown }

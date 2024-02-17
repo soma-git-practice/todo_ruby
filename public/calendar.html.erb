@@ -1,31 +1,23 @@
-<!DOCTYPE html>
-<html lang="ja">
-  <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>カレンダー</title>
-    <link rel="stylesheet" href="./styles/destyle.css">
-    <link rel="stylesheet" href="./styles/calendar.css">
-  </head>
-  <body>
-    <h1>カレンダー <%= @month %>月</h1>
-    <div class="calendar">
-      <div class="calendar-day">日曜日</div>
-      <div class="calendar-day">月曜日</div>
-      <div class="calendar-day">火曜日</div>
-      <div class="calendar-day">水曜日</div>
-      <div class="calendar-day">木曜日</div>
-      <div class="calendar-day">金曜日</div>
-      <div class="calendar-day">土曜日</div>
-      <% @value.each do |item| %>
-          <% item.each do |hoge| %>
-            <div class="calendar-item">
-              <div class="calendar-item-date"><%= hoge[:date] %></div>
-              <div class="calendar-item-todo"><%= hoge[:todo] %></div>
-            </div>
-          <% end %>
-      <% end %>
-    </div>
-  </body>
-</html>
+<h1>カレンダー <%= @month %>月</h1>
+<div class="calendar">
+  <div class="calendar-day">日曜日</div>
+  <div class="calendar-day">月曜日</div>
+  <div class="calendar-day">火曜日</div>
+  <div class="calendar-day">水曜日</div>
+  <div class="calendar-day">木曜日</div>
+  <div class="calendar-day">金曜日</div>
+  <div class="calendar-day">土曜日</div>
+  <%-
+    @value.each do |item|
+      item.each do |hoge|
+    # TODO Todoが複数あった場合の動作を考える
+  -%>
+  <div class="calendar-item">
+    <div class="calendar-item-date"><%= hoge[:date] %></div>
+    <div class="calendar-item-todo"><%= hoge[:todo] %></div>
+  </div>
+  <%-
+      end
+    end
+  -%>
+</div>
