@@ -128,10 +128,16 @@ end
 
 # Calendar
 srv.mount_proc('/calendar') do |req, res|
+  if query = req.query
+    year  = query["year"].to_i if query["year"].present?
+    month = query["month"].to_i if query["month"].present?
+  end
+
   origin = Date.today
-  origin_ym = origin.year, origin.month
-  begining_of_the_month = Date.new(*origin_ym, +1)
-  ending_of_the_month   = Date.new(*origin_ym, -1)
+  year ||= origin.year
+  month ||= origin.month
+  begining_of_the_month = Date.new(year, month, +1)
+  ending_of_the_month   = Date.new(year, month, -1)
   during = begining_of_the_month..ending_of_the_month
 
   day_hash = during.group_by(&:wday)
@@ -160,7 +166,7 @@ srv.mount_proc('/calendar') do |req, res|
     count += 1 if index > 6 && index % 7 == 0
   end
   @value = @value.each_slice(7).to_a
-  @month = origin.month
+  @month = month
   @style = ["destyle", "calendar"]
   @body  = ERB.new( File.read('public/calendar.html.erb') , trim_mode: '-').result
   res.body = ERB.new( File.read('public/template.html.erb') , trim_mode: '-').result
