@@ -128,45 +128,19 @@ end
 
 # Calendar
 srv.mount_proc('/calendar') do |req, res|
-  if query = req.query
-    year  = query["year"].to_i if query["year"].present?
-    month = query["month"].to_i if query["month"].present?
-  end
-
-  origin = Date.today
-  year ||= origin.year
-  month ||= origin.month
-  begining_of_the_month = Date.new(year, month, +1)
-  ending_of_the_month   = Date.new(year, month, -1)
-  during = begining_of_the_month..ending_of_the_month
-
-  day_hash = during.group_by(&:wday)
-  day_array = (0..6).map{|i| day_hash[i]}
-  day_array.each do |item|
-    break if item.first.day == 1
-    item.prepend ''
-  end
-
-  index = count = 0
-  @value = []
-  while true
-    break if day_array[index % 7][count] == nil
-    if day_array[index % 7][count].is_a?(Date)
-      @value << {
-        date: day_array[index % 7][count].day,
-        todo: Todo.find_by(date: day_array[index % 7][count]).try(:todo)
-      }
-    else
-      @value << {
-        date: nil,
-        todo: nil
-      }
-    end
-    index += 1
-    count += 1 if index > 6 && index % 7 == 0
+  @basic  = Date.today.to_s
+  @basic  = @basic.sub(/^.*?(?=-)/, req.query['year'])  if req.query['year'].present?
+  @basic  = @basic.sub(/(?<=-).+(?=-)/, req.query['month']) if req.query['month'].present?
+  @basic  = @basic.sub(/[^-]*$/, req.query['day']) if req.query['day'].present?
+  @basic  = Date.parse @basic
+  start  = @basic.beginning_of_month.beginning_of_week
+  last   = @basic.end_of_month.end_of_week
+  during = (start..last).to_a
+  @value = during.map do |item|
+    next { date: '' } unless item.month == @basic.month
+    { date: item.day, todo: Todo.find_by(date: item).try(:todo) }
   end
   @value = @value.each_slice(7).to_a
-  @month = month
   @style = ["destyle", "calendar"]
   @body  = ERB.new( File.read('public/calendar.html.erb') , trim_mode: '-').result
   res.body = ERB.new( File.read('public/template.html.erb') , trim_mode: '-').result
